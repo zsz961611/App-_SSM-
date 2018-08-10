@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+ "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ 
+ <mapper namespace="com.zsz.dao.appversion.AppVersionMapper">
+ 
+ 	<sql id="add">
+ 		set appId=#{appId},versionNo=#{versionNo},versionInfo=#{versionInfo},
+ 				publishStatus=#{publishStatus},downloadLink=#{downloadLink},
+ 				versionSize=#{versionSize},apkLocPath=#{apkLocPath},
+ 				apkFileName=#{apkFileName},createdBy=#{createdBy},
+ 				creationDate=#{creationDate}
+ 	</sql>
+ 
+ 	<!-- 新增版本信息 -->
+ 	<insert id="addAppVersion" parameterType="AppVersion" useGeneratedKeys="true" keyProperty="id">
+		insert into app_version <include refid="add"/>
+	</insert>
+ 
+ 	<!-- 删除某app对应的版本信息 -->
+ 	<delete id="versionDel" parameterType="_int">
+ 		delete from app_version where id=#{versionId}
+ 	</delete>
+ 	
+ 	<!-- 根据appid查询版本信息 历史版本 -->
+ 	<!-- 软件名称 	版本号 	版本大小(单位:M) 	发布状态 	APK文件下载 	最新更新时间 -->
+ 	<select id="versiongetById" parameterType="_int" resultType="AppVersion">
+ 		SELECT v.*,
+ 		(SELECT a.softwareName FROM app_info a WHERE a.id=v.appId) AS appName,
+	    (SELECT d.valueName FROM data_dictionary d WHERE d.valueId=v.publishStatus AND d.typeCode='PUBLISH_STATUS') AS publishStatusName
+		FROM app_version v WHERE v.appId=#{appid}
+ 	</select>
+ 	
+ 	<!--  根据最新版本号修改版本信息 -->
+ 	<update id="updateNewVersion" parameterType="AppVersion">
+ 		update app_version
+ 		<trim prefix="set" suffixOverrides="," suffix="where id=#{id}">
+			<if test="versionNo != null">versionNo=#{versionNo},</if>
+			<if test="versionInfo != null">versionInfo=#{versionInfo},</if>
+			<if test="publishStatus != null">publishStatus=#{publishStatus},</if>
+			<if test="downloadLink != null">downloadLink=#{downloadLink},</if>
+			<if test="apkLocPath != null">apkLocPath=#{apkLocPath},</if>
+			<if test="versionSize != null">versionSize=#{versionSize},</if>
+			<if test="apkFileName != null">apkFileName=#{apkFileName},</if>
+			<if test="modifyBy != null">modifyBy=#{modifyBy},</if>
+			<if test="modifyDate != null">modifyDate=#{modifyDate},</if>
+		</trim>
+ 	</update>
+ 	
+ 	<!-- 根据最新版本id查询版本信息 指定版本 -->
+ 	<select id="getByIdNewVersion" parameterType="int" resultType="AppVersion">
+		select * from app_version where id = #{id}
+	</select>
+	
+	<!-- 更新apk信息 -->
+	<update id="deleteApkFile" parameterType="Integer">
+		update app_version set apkLocPath=null,downloadLink=null,apkFileName=null
+			where id = #{id}
+	</update>
+ 
+ </mapper>
